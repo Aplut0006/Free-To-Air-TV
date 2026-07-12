@@ -1,0 +1,6 @@
+{
+  "name": "Global Free-to-Air TV Globe",
+  "description": "An interactive, rotatable globe that allows users to select countries and play free-to-air live television channels directly in the browser.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
