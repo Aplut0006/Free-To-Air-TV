@@ -3,11 +3,274 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Google AI Studio App</title>
+    <title>World Orbit - Terrestrial TV Globe</title>
+    <!-- Import Space Grotesk and Inter fonts -->
+    <link rel="stylesheet" href="/src/index.css" />
   </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+  <body class="min-h-screen bg-[#0F0F0F] text-[#F5F5F5] flex flex-col font-sans selection:bg-orange-500/20 selection:text-orange-400 overflow-x-hidden">
+    
+    <!-- GLOBAL BACKGROUND TELEMETRY SHADING -->
+    <div class="fixed inset-0 pointer-events-none z-0">
+      <div class="absolute top-0 left-1/4 w-[500px] h-[500px] bg-orange-900/5 rounded-full blur-[140px] opacity-40"></div>
+      <div class="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-red-900/5 rounded-full blur-[180px] opacity-30"></div>
+    </div>
+
+    <!-- HEADER BAR -->
+    <header class="relative z-10 border-b border-white/10 bg-[#0F0F0F] px-6 md:px-12 py-6 flex flex-col md:flex-row items-center justify-between gap-4 shrink-0">
+      <div class="flex items-center gap-4">
+        <div class="w-9 h-9 bg-black border border-white/20 flex items-center justify-center shadow-lg shadow-black/50 rounded-sm">
+          <!-- TV Icon SVG placeholder -->
+          <span id="header-tv-icon" class="text-orange-500"></span>
+        </div>
+        <div class="flex flex-col">
+          <div class="text-[10px] tracking-[0.4em] font-bold uppercase text-white/40">Global Broadcast Interface / 01</div>
+          <h1 class="text-sm font-black uppercase tracking-widest text-white mt-0.5">
+            World Orbit FTA Globe
+          </h1>
+        </div>
+      </div>
+
+      <!-- Transmission Navigation mimicry -->
+      <nav class="flex gap-8 my-2 md:my-0">
+        <span class="text-[10px] tracking-widest uppercase font-bold border-b border-white pb-1 text-white">Transmission</span>
+        <span class="text-[10px] tracking-widest uppercase font-bold text-white/40 hover:text-white/90 transition-all cursor-pointer">Frequencies</span>
+        <span class="text-[10px] tracking-widest uppercase font-bold text-white/40 hover:text-white/90 transition-all cursor-pointer">Archive</span>
+      </nav>
+
+      <!-- Dynamic Telemetry Status Hub -->
+      <div class="flex items-center gap-4 text-[10px] font-mono bg-white/5 border border-white/10 px-4 py-2 rounded-sm">
+        <div class="flex items-center gap-2">
+          <span id="tuner-status-dot" class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+          <span class="text-white/40 uppercase tracking-widest font-bold">Tuner:</span>
+          <span id="tuner-status-text" class="text-white/90">Initializing...</span>
+        </div>
+
+        <div class="hidden md:flex items-center gap-1.5 border-l border-white/10 pl-4 text-[9px] text-white/40 uppercase tracking-widest font-bold">
+          <span id="header-activity-icon" class="text-orange-500"></span>
+          <span>Territories: <span id="header-territory-count">0</span></span>
+        </div>
+      </div>
+    </header>
+
+    <!-- MASTER RESPONSIVE GRID CONTENT -->
+    <main class="flex-1 relative z-10 w-full max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden min-h-0">
+      
+      <!-- LEFT COLUMN: MULTIMEDIA STATION (Player & Globe) - Takes 7/12 width -->
+      <div class="lg:col-span-7 flex flex-col gap-6 h-full min-h-0">
+        
+        <!-- Section 1: HLS Live Feed Tuner Player -->
+        <div id="video-player-container" class="shrink-0 w-full relative bg-black rounded-sm border border-white/10 shadow-2xl overflow-hidden aspect-video transition-all duration-300 max-h-[500px]">
+          <!-- Video player markup will be dynamically inserted here -->
+        </div>
+
+        <!-- Section 2: Interactive 3D Satellite Map Globe -->
+        <div id="globe-component-container" class="flex-1 min-h-[350px] md:min-h-[450px] relative flex flex-col items-center justify-center bg-black p-4 rounded-sm border border-white/10 shadow-2xl overflow-hidden h-full">
+          <!-- Globe layout will be drawn here -->
+          <div class="absolute top-4 left-4 z-10 flex flex-col gap-1 pointer-events-none">
+            <h3 class="text-xs font-bold tracking-[0.2em] text-white/40 uppercase font-mono">3D Explorer Grid</h3>
+            <p class="text-[10px] text-white/30 uppercase tracking-widest font-bold">DRAG // SPIN // SELECT REGION</p>
+          </div>
+
+          <!-- Control floating panel -->
+          <div class="absolute right-4 top-4 z-10 flex flex-col gap-2 bg-[#0F0F0F] p-2 rounded-none border border-white/10 shadow-lg">
+            <button id="btn-zoom-in" title="Zoom In" class="p-2 text-white/60 hover:text-orange-500 hover:bg-white/5 transition-all cursor-pointer">
+              <span id="icon-zoom-in"></span>
+            </button>
+            <button id="btn-zoom-out" title="Zoom Out" class="p-2 text-white/60 hover:text-orange-500 hover:bg-white/5 transition-all cursor-pointer">
+              <span id="icon-zoom-out"></span>
+            </button>
+            <button id="btn-reset-globe" title="Reset Direction" class="p-2 text-white/60 hover:text-orange-500 hover:bg-white/5 transition-all cursor-pointer">
+              <span id="icon-reset"></span>
+            </button>
+            <button id="btn-auto-spin" title="Auto-Rotate" class="p-2 text-white/60 hover:text-orange-500 hover:bg-white/5 transition-all animate-pulse cursor-pointer">
+              <span id="icon-spin"></span>
+            </button>
+          </div>
+
+          <div id="globe-svg-wrapper" class="w-full h-full flex items-center justify-center relative">
+            <svg id="globe-svg" width="600" height="600" viewBox="0 0 600 600" class="w-full h-full drop-shadow-[0_0_50px_rgba(255,255,255,0.03)] cursor-grab active:cursor-grabbing"></svg>
+            <div id="globe-loader" class="absolute inset-0 flex flex-col items-center justify-center gap-4 text-center bg-black/40 backdrop-blur-xs">
+              <span id="globe-loader-icon" class="text-orange-500 animate-spin"></span>
+              <span class="text-white/40 text-xs font-mono font-bold uppercase tracking-widest">Bootstrapping Cartography...</span>
+            </div>
+          </div>
+
+          <!-- Globe hovered country tooltip -->
+          <div id="globe-tooltip" class="absolute z-30 pointer-events-none transform -translate-x-1/2 -translate-y-full mb-4 bg-[#0F0F0F] border border-white/10 text-white rounded-none py-2 px-3 shadow-xl hidden gap-3 backdrop-blur-md transition-opacity duration-200">
+            <div id="tooltip-flag" class="text-xl"></div>
+            <div class="flex flex-col">
+              <span id="tooltip-name" class="text-[11px] font-bold text-white tracking-wider uppercase font-sans"></span>
+              <span id="tooltip-channels" class="text-[9px] font-mono text-orange-500 uppercase tracking-widest font-bold"></span>
+            </div>
+            <div class="w-1.5 h-1.5 bg-[#0F0F0F] rotate-45 border-r border-b border-white/10 absolute -bottom-1 left-1/2 transform -translate-x-1/2"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: CONTROL PANEL SIDEBAR (Country Explorer or Channel list) - Takes 5/12 width -->
+      <div class="lg:col-span-5 h-full min-h-0 flex flex-col gap-4">
+        
+        <!-- Beautiful Territorial Extract HUD Card -->
+        <div class="bg-white/5 border border-white/10 rounded-sm p-5 space-y-4 shrink-0">
+          <div class="flex items-end justify-between gap-4">
+            <div class="flex items-end gap-3 min-w-0">
+              <span id="hud-country-name" class="text-3xl md:text-4xl font-serif italic text-white truncate">World Orbit</span>
+              <span id="hud-region-code" class="text-[10px] mb-1.5 text-white/40 tracking-widest uppercase font-bold shrink-0">SCANNING REGIONS</span>
+            </div>
+            <button id="btn-hud-back" class="hidden text-[9px] text-orange-400 hover:text-orange-300 font-mono uppercase tracking-widest border border-orange-500/30 hover:border-orange-500 bg-orange-500/5 px-2 py-1 rounded-sm transition-all cursor-pointer">
+              GLOBAL
+            </button>
+          </div>
+          <div class="h-[1px] w-full bg-gradient-to-r from-white/20 via-white/10 to-transparent"></div>
+          <div class="flex justify-between text-[10px] tracking-widest uppercase font-bold text-white/50 font-mono">
+            <span>Active Transponders: <span id="hud-transponders-count">0</span></span>
+            <span>Extraction: <span id="hud-extraction-status">Standby</span></span>
+          </div>
+        </div>
+
+        <!-- Core Navigation Panels Sidebar Card Container -->
+        <div id="sidebar-panel-container" class="flex-1 min-h-0 flex flex-col bg-black border border-white/10 rounded-sm p-5 h-full backdrop-blur-md shadow-xl overflow-hidden min-h-[500px]">
+          
+          <!-- Tab Navigation (Only visible when no country is selected) -->
+          <div id="sidebar-tabs-nav" class="grid grid-cols-3 gap-1 bg-[#121212] p-1 rounded-none border border-white/10 mb-4 shrink-0">
+            <button id="tab-countries-btn" class="flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold rounded-none uppercase tracking-widest bg-[#1C1C1C] border border-white/10 text-orange-500 cursor-pointer">
+              <span id="tab-countries-icon"></span>
+              Regions
+            </button>
+            <button id="tab-featured-btn" class="flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold rounded-none uppercase tracking-widest text-white/40 hover:text-white/80 cursor-pointer">
+              <span id="tab-featured-icon"></span>
+              Hot Feeds
+            </button>
+            <button id="tab-search-btn" class="flex items-center justify-center gap-1.5 py-2.5 text-xs font-bold rounded-none uppercase tracking-widest text-white/40 hover:text-white/80 cursor-pointer">
+              <span id="tab-search-icon"></span>
+              Scan All
+            </button>
+          </div>
+
+          <!-- DYNAMIC PANEL CONTENTS -->
+          <div class="flex-1 min-h-0 flex flex-col overflow-hidden">
+            
+            <!-- PANEL 1: COUNTRIES (REGIONS) -->
+            <div id="panel-countries" class="flex-1 flex flex-col overflow-hidden">
+              <div class="relative mb-3.5 shrink-0">
+                <span id="search-countries-icon" class="absolute left-3 top-1/2 -translate-y-1/2 text-white/30"></span>
+                <input id="input-search-countries" type="text" placeholder="Search territories..." class="w-full bg-black border border-white/10 text-[#F5F5F5] text-xs pl-9 pr-4 py-2.5 rounded-none placeholder-white/20 focus:outline-none focus:border-orange-500/80 transition-all font-sans" />
+              </div>
+
+              <!-- Database Sync Notice -->
+              <div id="db-sync-notice" class="flex items-center gap-3 px-3 py-2 bg-orange-500/10 border border-orange-500/20 rounded-none text-orange-500 text-[10px] mb-3 font-mono animate-pulse uppercase tracking-widest font-bold shrink-0">
+                <span id="db-sync-loader-icon" class="animate-spin"></span>
+                <span id="db-sync-text">EXTRACTING TERRESTRIAL INDEX...</span>
+              </div>
+
+              <div id="db-sync-warning" class="hidden flex items-start gap-2.5 p-3 bg-red-950/10 border border-red-900/20 rounded-none text-red-400 text-xs mb-3 font-sans shrink-0">
+                <span id="db-sync-warning-icon" class="mt-0.5 shrink-0"></span>
+                <div>
+                  <span class="font-bold">Sync notice:</span> Offline database active. Pre-loaded satellite records loaded.
+                </div>
+              </div>
+
+              <!-- Scrollable Countries List -->
+              <div id="countries-list-scrollable" class="flex-1 overflow-y-auto space-y-1.5 pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                <!-- Country buttons dynamically generated here -->
+              </div>
+            </div>
+
+            <!-- PANEL 2: HOT FEEDS -->
+            <div id="panel-featured" class="hidden flex-1 flex flex-col overflow-hidden">
+              <div class="mb-3 shrink-0">
+                <h4 class="text-xs font-bold text-white/40 uppercase tracking-widest font-mono flex items-center gap-1.5">
+                  <span id="hot-feeds-sparkle-icon" class="text-orange-500"></span>
+                  Featured Global Feeds
+                </h4>
+                <p class="text-[10px] text-white/30 mt-0.5 uppercase tracking-wider font-bold">Unencrypted direct extraction node channels.</p>
+              </div>
+
+              <!-- Featured feeds scrollable -->
+              <div id="featured-feeds-scrollable" class="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin scrollbar-thumb-white/10">
+                <!-- Featured feeds list item dynamically generated here -->
+              </div>
+            </div>
+
+            <!-- PANEL 3: SCAN ALL -->
+            <div id="panel-search" class="hidden flex-1 flex flex-col overflow-hidden">
+              <div class="relative mb-3 shrink-0">
+                <span id="search-global-icon" class="absolute left-3 top-1/2 -translate-y-1/2 text-white/30"></span>
+                <input id="input-search-global" type="text" placeholder="Search global channels..." class="w-full bg-black border border-white/10 text-[#F5F5F5] text-xs pl-9 pr-4 py-2.5 rounded-none placeholder-white/20 focus:outline-none focus:border-orange-500/80 transition-all font-sans" />
+              </div>
+
+              <div class="mb-2 text-[9px] text-white/30 font-mono flex items-center justify-between uppercase tracking-widest font-bold shrink-0">
+                <span>SCANNING IONOSPHERE INDEX</span>
+                <span id="global-search-loader" class="hidden text-orange-500"></span>
+              </div>
+
+              <!-- Global search results scrollable -->
+              <div id="global-search-scrollable" class="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin scrollbar-thumb-white/10">
+                <!-- Dynamic search results lists or empty states -->
+              </div>
+            </div>
+
+            <!-- PANEL 4: CHANNELS LIST (Visible only when country selected) -->
+            <div id="panel-channels" class="hidden flex-1 flex flex-col overflow-hidden">
+              <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-4 shrink-0">
+                <div class="flex items-center gap-3.5 min-w-0">
+                  <button id="btn-channels-back" class="p-2 bg-black border border-white/10 text-white/40 hover:text-white rounded-none hover:bg-white/5 transition-all cursor-pointer" title="Back to Global Explorer">
+                    <span id="icon-channels-back"></span>
+                  </button>
+                  
+                  <div class="flex items-center gap-2.5 min-w-0">
+                    <span id="channels-country-flag" class="text-2xl filter saturate-100"></span>
+                    <div class="flex flex-col min-w-0">
+                      <h3 id="channels-country-title" class="text-xs font-bold text-white tracking-widest uppercase truncate font-sans"></h3>
+                      <span id="channels-count-subtitle" class="text-[9px] font-mono text-orange-500 uppercase tracking-widest mt-0.5 font-bold"></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex flex-col gap-3 mb-4 shrink-0">
+                <!-- Search within selected country -->
+                <div class="relative">
+                  <span id="search-local-channels-icon" class="absolute left-3 top-1/2 -translate-y-1/2 text-white/30"></span>
+                  <input id="input-search-local" type="text" placeholder="Search channels inside country..." class="w-full bg-black border border-white/10 text-[#F5F5F5] text-xs pl-9 pr-4 py-2.5 rounded-none placeholder-white/20 focus:outline-none focus:border-orange-500/80 transition-all font-sans" />
+                </div>
+
+                <!-- Category tabs chips list -->
+                <div id="local-categories-chips" class="flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                  <!-- Category tabs will be inserted dynamically here -->
+                </div>
+              </div>
+
+              <!-- Country channels scrollable list -->
+              <div id="local-channels-scrollable" class="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin scrollbar-thumb-white/10">
+                <!-- Channel grid list or tuning spinner -->
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- FOOTER METRICS -->
+    <footer class="relative z-10 border-t border-white/10 bg-white text-black py-3 px-6 md:px-12 text-[10px] font-black uppercase tracking-widest flex flex-col md:flex-row items-center justify-between gap-2 shrink-0">
+      <div class="flex items-center gap-6">
+        <span class="flex items-center gap-1.5">
+          <span id="footer-radio-icon" class="text-orange-500 flex items-center"></span>
+          Status: Uplink Nominal
+        </span>
+        <span class="text-black/40 hidden sm:inline">|</span>
+        <span class="text-black/50">Data Rate: 42.4 Mbps</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span>Stream Protocol: HLS-M3U8</span>
+        <span class="text-black/20">/</span>
+        <span>© 2026 Planetary Media Systems</span>
+      </div>
+    </footer>
+
+    <!-- Video dependencies (D3 and TopoJSON will be compiled via imports in script, Hls too) -->
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
-
